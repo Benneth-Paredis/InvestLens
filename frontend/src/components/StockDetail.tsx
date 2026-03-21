@@ -74,35 +74,40 @@ export default function StockDetail({ ticker }: Props) {
       <div style={{ width: '100%', height: 260, marginBottom: '24px' }}>
         {loadingPrices ? (
           <p style={{ color: '#999', fontSize: '14px' }}>Loading prices...</p>
-        ) : priceHistory && priceHistory.prices.length > 0 ? (
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={priceHistory.prices}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-              <XAxis
-                dataKey="date"
-                tick={{ fontSize: 11 }}
-                tickFormatter={(d) => d.slice(0, 7)}
-                interval="preserveStartEnd"
-              />
-              <YAxis
-                tick={{ fontSize: 11 }}
-                domain={['auto', 'auto']}
-                tickFormatter={(v) => `$${v}`}
-              />
-              <Tooltip
-                formatter={(value: number) => [`$${value.toFixed(2)}`, 'Close']}
-                labelFormatter={(label) => `Date: ${label}`}
-              />
-              <Line
-                type="monotone"
-                dataKey="close"
-                stroke="#1a1a2e"
-                dot={false}
-                strokeWidth={2}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        ) : (
+        ) : priceHistory && priceHistory.prices.length > 0 ? (() => {
+          const prices = priceHistory.prices;
+          const isPositive = prices[prices.length - 1].close >= prices[0].close;
+          const lineColor = isPositive ? '#16a34a' : '#dc2626';
+          return (
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={prices}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+                <XAxis
+                  dataKey="date"
+                  tick={{ fontSize: 11 }}
+                  tickFormatter={(d) => d.slice(0, 7)}
+                  interval="preserveStartEnd"
+                />
+                <YAxis
+                  tick={{ fontSize: 11 }}
+                  domain={['auto', 'auto']}
+                  tickFormatter={(v) => `$${v}`}
+                />
+                <Tooltip
+                  formatter={(value: number) => [`$${value.toFixed(2)}`, 'Close']}
+                  labelFormatter={(label) => `Date: ${label}`}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="close"
+                  stroke={lineColor}
+                  dot={false}
+                  strokeWidth={2}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          );
+        })() : (
           <p style={{ color: '#999', fontSize: '14px' }}>No price data available.</p>
         )}
       </div>

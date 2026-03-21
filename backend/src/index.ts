@@ -1,6 +1,6 @@
 import express from "express";
-import { fetchStockData } from "./alphaVantage";
-import { fetchPriceHistory } from "./alphaVantagePrices";
+import { fetchStockData } from "./stockData";
+import { fetchPriceHistory } from "./priceHistory";
 import { analysePortfolio } from "./openai";
 import { Holding } from "./types";
 

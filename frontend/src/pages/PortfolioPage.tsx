@@ -34,7 +34,8 @@ export default function PortfolioPage() {
         body: JSON.stringify({ holdings }),
       });
       const data = await res.json();
-      localStorage.setItem('analysis', data.analysis);
+      localStorage.setItem('holdings', JSON.stringify(holdings));
+      localStorage.setItem('analysis', JSON.stringify(data.analysis));
       navigate('/analysis');
     } finally {
       setAnalysisLoading(false);
