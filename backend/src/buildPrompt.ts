@@ -1,6 +1,10 @@
+// Constructs the GPT prompt used to analyse a portfolio.
+
 import { StockData } from './types';
 
+// Builds a structured prompt instructing the model to return JSON with summary, risks, and recommendations.
 export function buildPrompt(portfolio: StockData[]): string {
+  // Format each holding as a labelled block of key metrics.
   const holdingsText = portfolio
     .map(
       (stock) => `

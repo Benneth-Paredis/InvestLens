@@ -1,7 +1,10 @@
+// Fetches fundamental stock data (sector, market cap, P/E, 52-week range) from Yahoo Finance.
+
 import YahooFinance from 'yahoo-finance2';
 const yahooFinance = new YahooFinance();
 import type { Holding, StockData } from './types';
 
+// Fetches quote summary data for a single holding and returns enriched StockData.
 export async function fetchStockData(holding: Holding): Promise<StockData> {
   const quote = await yahooFinance.quoteSummary(holding.ticker, {
     modules: ['summaryProfile', 'summaryDetail'],
@@ -10,6 +13,7 @@ export async function fetchStockData(holding: Holding): Promise<StockData> {
   const profile = quote.summaryProfile;
   const detail = quote.summaryDetail;
 
+  // Converts a raw market cap number to a human-readable T/B/M string.
   const formatMarketCap = (value?: number | null): string => {
     if (!value) return 'N/A';
     if (value >= 1e12) return `$${(value / 1e12).toFixed(2)}T`;

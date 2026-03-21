@@ -1,3 +1,5 @@
+// Pie chart showing how the portfolio's invested amount is distributed across sectors.
+
 import { useEffect, useState } from 'react';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import type { Holding } from '../types';
@@ -6,6 +8,7 @@ interface Props {
   holdings: Holding[];
 }
 
+// One slice of the pie — a sector name and its total invested value.
 interface SectorSlice {
   name: string;
   value: number;
@@ -13,6 +16,7 @@ interface SectorSlice {
 
 const COLORS = ['#1a1a2e', '#16213e', '#0f3460', '#533483', '#e94560', '#2c7873', '#6fb98f', '#f5a623'];
 
+// Fetches sector data for all holdings, aggregates by sector, and renders a pie chart.
 export default function SectorPieChart({ holdings }: Props) {
   const [slices, setSlices] = useState<SectorSlice[]>([]);
   const [loading, setLoading] = useState(false);
@@ -27,6 +31,7 @@ export default function SectorPieChart({ holdings }: Props) {
     })
       .then((r) => r.json())
       .then((data) => {
+        // Sum invested amounts per sector across all holdings.
         const totals: Record<string, number> = {};
         for (const stock of data.portfolio) {
           const sector = stock.sector ?? 'Unknown';
@@ -40,6 +45,7 @@ export default function SectorPieChart({ holdings }: Props) {
   if (loading) return <p style={{ color: '#999', fontSize: '14px' }}>Loading sectors...</p>;
   if (slices.length === 0) return null;
 
+  // Total invested across all sectors, used to compute percentages in the tooltip and legend.
   const total = slices.reduce((sum, s) => sum + s.value, 0);
 
   return (
@@ -55,6 +61,7 @@ export default function SectorPieChart({ holdings }: Props) {
             outerRadius={100}
           >
             {slices.map((_, i) => (
+              // Cycle through COLORS if there are more sectors than colours.
               <Cell key={i} fill={COLORS[i % COLORS.length]} />
             ))}
           </Pie>

@@ -1,8 +1,12 @@
+// Shared TypeScript interfaces used across the backend API.
+
+// A single portfolio holding as submitted by the client.
 export interface Holding {
   ticker: string;
   amountInvested: number;
 }
 
+// Enriched holding with market data fetched from Yahoo Finance.
 export interface StockData {
   ticker: string;
   amountInvested: number;
@@ -13,11 +17,13 @@ export interface StockData {
   peRatio: string;
 }
 
+// A single closing price on a given date.
 export interface PricePoint {
   date: string;
   close: number;
 }
 
+// Price history for a ticker at a specified interval.
 export interface PriceHistory {
   ticker: string;
   interval: string;

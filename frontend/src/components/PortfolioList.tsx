@@ -1,3 +1,5 @@
+// Displays all current holdings as a selectable, removable list.
+
 import type { Holding } from '../types';
 
 interface Props {
@@ -7,6 +9,7 @@ interface Props {
   onRemove: (ticker: string) => void;
 }
 
+// Renders each holding as a row with selection highlight and a remove button.
 export default function PortfolioList({ holdings, selectedTicker, onSelect, onRemove }: Props) {
   if (holdings.length === 0) {
     return <p style={{ color: '#999', fontSize: '14px' }}>No holdings added yet.</p>;
@@ -38,6 +41,7 @@ export default function PortfolioList({ holdings, selectedTicker, onSelect, onRe
               <span style={{ fontSize: '14px', opacity: 0.75 }}>
                 ${holding.amountInvested.toLocaleString()}
               </span>
+              {/* stopPropagation prevents the row click (select) from firing when removing. */}
               <button
                 onClick={(e) => { e.stopPropagation(); onRemove(holding.ticker); }}
                 style={{

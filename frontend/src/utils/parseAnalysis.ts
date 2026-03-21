@@ -1,11 +1,15 @@
+// Parses a raw analysis string (which may contain markdown headers) into structured sections.
+
 interface ParsedAnalysis {
   summary: string;
   risks: string;
   recommendations: string;
 }
 
+// Section names the parser recognises as header markers.
 const SECTION_NAMES = ['summary', 'risks', 'recommendations'];
 
+// Strips markdown formatting (##, **, trailing colons) from a line to produce a plain lowercase key.
 function cleanHeader(line: string): string {
   return line
     .replace(/^#+\s*/, '')      // remove ## or ###
@@ -15,6 +19,7 @@ function cleanHeader(line: string): string {
     .toLowerCase();
 }
 
+// Splits a raw multi-line analysis string into the three named sections.
 export function parseAnalysis(raw: string): ParsedAnalysis {
   console.log('Raw analysis string:', raw);
 
@@ -26,6 +31,7 @@ export function parseAnalysis(raw: string): ParsedAnalysis {
     const cleaned = cleanHeader(line);
 
     if (SECTION_NAMES.includes(cleaned)) {
+      // Flush the previous section before starting a new one.
       if (currentSection) {
         sections[currentSection] = currentContent.join('\n').trim();
         currentContent.length = 0;
@@ -36,6 +42,7 @@ export function parseAnalysis(raw: string): ParsedAnalysis {
     }
   }
 
+  // Flush the final section after the loop ends.
   if (currentSection) {
     sections[currentSection] = currentContent.join('\n').trim();
   }
