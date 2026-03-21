@@ -3,6 +3,7 @@
 // A single portfolio holding as submitted by the client.
 export interface Holding {
   ticker: string;
+  shares: number;
   amountInvested: number;
 }
 
@@ -15,6 +16,7 @@ export interface StockData {
   weekHigh52: string;
   weekLow52: string;
   peRatio: string;
+  currentPrice: string;
 }
 
 // A single closing price on a given date.

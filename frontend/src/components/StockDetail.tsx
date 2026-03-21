@@ -19,6 +19,13 @@ interface Props {
 const INTERVALS = ['daily', 'weekly', 'monthly', 'yearly'] as const;
 type Interval = (typeof INTERVALS)[number];
 
+const card: React.CSSProperties = {
+  backgroundColor: '#fff',
+  border: '1px solid #e5e5e5',
+  borderRadius: '8px',
+  padding: '20px',
+};
+
 // Fetches and renders a price chart and fundamental stats for the given ticker.
 export default function StockDetail({ ticker }: Props) {
   const [stats, setStats] = useState<StockData | null>(null);
@@ -52,112 +59,115 @@ export default function StockDetail({ ticker }: Props) {
       .finally(() => setLoadingPrices(false));
   }, [ticker, interval]);
 
-  return (
-    <div style={{ padding: '16px 0' }}>
-      <h2 style={{ margin: '0 0 16px', fontSize: '20px', color: ticker ? '#111' : '#ccc' }}>
-        {ticker ?? 'Select a holding'}
-      </h2>
+  // Empty state shown when no ticker is selected.
+  if (!ticker) {
+    return (
+      <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '12px', textAlign: 'center', padding: '40px' }}>
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+        </svg>
+        <p style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: '#1a1a1a' }}>Select a stock to explore</p>
+        <p style={{ margin: 0, fontSize: '14px', color: '#999', maxWidth: '260px', lineHeight: 1.6 }}>
+          Click any holding on the left to see its price history and key stats
+        </p>
+      </div>
+    );
+  }
 
-      {/* Interval toggles */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-        {INTERVALS.map((i) => (
-          <button
-            key={i}
-            onClick={() => setInterval(i)}
-            style={{
-              padding: '6px 14px',
-              fontSize: '13px',
-              cursor: 'pointer',
-              borderRadius: '4px',
-              border: '1px solid #ccc',
-              backgroundColor: interval === i ? '#1a1a2e' : '#fff',
-              color: interval === i ? '#fff' : '#111',
-              fontWeight: interval === i ? 600 : 400,
-            }}
-          >
-            {i.charAt(0).toUpperCase() + i.slice(1)}
-          </button>
-        ))}
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
+      {/* Card 1: ticker name + interval toggles */}
+      <div style={{ ...card, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 700, color: '#1a1a1a' }}>
+          {ticker}
+        </h2>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          {INTERVALS.map((i) => (
+            <button
+              key={i}
+              onClick={() => setInterval(i)}
+              style={{
+                padding: '6px 14px',
+                fontSize: '13px',
+                cursor: 'pointer',
+                borderRadius: '4px',
+                border: '1px solid #e5e5e5',
+                backgroundColor: interval === i ? '#1a1a2e' : '#fff',
+                color: interval === i ? '#fff' : '#111',
+                fontWeight: interval === i ? 600 : 400,
+              }}
+            >
+              {i.charAt(0).toUpperCase() + i.slice(1)}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Chart — renders an empty axes when no ticker is selected */}
-      <div style={{ width: '100%', height: 260, marginBottom: '24px' }}>
-        {!ticker ? (
+      {/* Card 2: line chart */}
+      <div style={{ ...card, height: '260px' }}>
+        {loadingPrices ? (
+          <p style={{ color: '#999', fontSize: '14px', margin: 0 }}>Loading prices...</p>
+        ) : priceHistory && priceHistory.prices.length > 0 ? (
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={[]}>
+            <LineChart data={priceHistory.prices}>
               <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-              <XAxis tick={{ fontSize: 11 }} />
-              <YAxis tick={{ fontSize: 11 }} />
+              <XAxis
+                dataKey="date"
+                tick={{ fontSize: 11 }}
+                tickFormatter={(d) => d.slice(0, 7)}
+                interval="preserveStartEnd"
+              />
+              <YAxis
+                tick={{ fontSize: 11 }}
+                domain={['auto', 'auto']}
+                tickFormatter={(v) => `$${v}`}
+              />
+              <Tooltip
+                formatter={(value: number) => [`$${value.toFixed(2)}`, 'Close']}
+                labelFormatter={(label) => `Date: ${label}`}
+              />
+              <Line
+                type="monotone"
+                dataKey="close"
+                stroke="#1a1a2e"
+                dot={false}
+                strokeWidth={2}
+              />
             </LineChart>
           </ResponsiveContainer>
-        ) : loadingPrices ? (
-          <p style={{ color: '#999', fontSize: '14px' }}>Loading prices...</p>
-        ) : priceHistory && priceHistory.prices.length > 0 ? (() => {
-          const prices = priceHistory.prices;
-          // Colour the line green for a net gain, red for a net loss over the period.
-          const isPositive = prices[prices.length - 1].close >= prices[0].close;
-          const lineColor = isPositive ? '#16a34a' : '#dc2626';
-          return (
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={prices}>
-                <CartesianGrid strokeDashboard="3 3" stroke="#eee" />
-                <XAxis
-                  dataKey="date"
-                  tick={{ fontSize: 11 }}
-                  tickFormatter={(d) => d.slice(0, 7)}
-                  interval="preserveStartEnd"
-                />
-                <YAxis
-                  tick={{ fontSize: 11 }}
-                  domain={['auto', 'auto']}
-                  tickFormatter={(v) => `$${v}`}
-                />
-                <Tooltip
-                  formatter={(value: number) => [`$${value.toFixed(2)}`, 'Close']}
-                  labelFormatter={(label) => `Date: ${label}`}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="close"
-                  stroke={lineColor}
-                  dot={false}
-                  strokeWidth={2}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          );
-        })() : (
-          <p style={{ color: '#999', fontSize: '14px' }}>No price data available.</p>
+        ) : (
+          <p style={{ color: '#999', fontSize: '14px', margin: 0 }}>No price data available.</p>
         )}
       </div>
 
-      {/* Stock stats */}
-      {loadingStats ? (
-        <p style={{ color: '#999', fontSize: '14px' }}>Loading stats...</p>
-      ) : stats ? (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-            gap: '16px',
-          }}
-        >
-          {[
-            { label: 'Sector', value: stats.sector },
-            { label: 'Market Cap', value: stats.marketCap },
-            { label: 'P/E Ratio', value: stats.peRatio },
-            { label: '52W High', value: stats.weekHigh52 },
-            { label: '52W Low', value: stats.weekLow52 },
-          ].map(({ label, value }) => (
-            <div key={label}>
-              <p style={{ margin: 0, fontSize: '11px', color: '#999', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                {label}
-              </p>
-              <p style={{ margin: '4px 0 0', fontSize: '15px', fontWeight: 500 }}>{value}</p>
-            </div>
-          ))}
-        </div>
-      ) : null}
+      {/* Card 3: 2x3 stats grid */}
+      <div style={card}>
+        {loadingStats ? (
+          <p style={{ color: '#999', fontSize: '14px', margin: 0 }}>Loading stats...</p>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px 24px' }}>
+            {[
+              { label: 'Sector', value: stats?.sector },
+              { label: 'Market Cap', value: stats?.marketCap },
+              { label: 'Current Price', value: stats?.currentPrice },
+              { label: 'P/E Ratio', value: stats?.peRatio },
+              { label: '52W High', value: stats?.weekHigh52 },
+              { label: '52W Low', value: stats?.weekLow52 },
+            ].map(({ label, value }) => (
+              <div key={label}>
+                <p style={{ margin: 0, fontSize: '11px', color: '#999', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  {label}
+                </p>
+                <p style={{ margin: '4px 0 0', fontSize: '15px', fontWeight: 700, color: '#1a1a1a' }}>
+                  {value ?? '—'}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
     </div>
   );
 }

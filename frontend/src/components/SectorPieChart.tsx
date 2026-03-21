@@ -14,7 +14,7 @@ interface SectorSlice {
   value: number;
 }
 
-const COLORS = ['#1a1a2e', '#16213e', '#0f3460', '#533483', '#e94560', '#2c7873', '#6fb98f', '#f5a623'];
+const COLORS = ['#1a1a2e', '#16213e', '#0f3460', '#533483', '#2b9348', '#e94560', '#f5a623', '#2c7873'];
 
 // Fetches sector data for all holdings, aggregates by sector, and renders a pie chart.
 export default function SectorPieChart({ holdings }: Props) {

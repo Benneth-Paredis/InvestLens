@@ -23,20 +23,22 @@ export default function AnalysisSections({ analysis }: Props) {
   ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       {sections.map(({ title, content }) => (
         <div
           key={title}
           style={{
-            padding: '24px 28px',
+            padding: '24px',
             borderRadius: '8px',
             backgroundColor: '#ffffff',
+            border: '1px solid #e5e5e5',
+            boxSizing: 'border-box',
           }}
         >
-          <p style={{ margin: '0 0 12px', fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#1a1a2e' }}>
+          <p style={{ margin: '0 0 12px', fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#1a1a1a', textAlign: 'left' }}>
             {title}
           </p>
-          <p style={{ margin: 0, fontSize: '15px', lineHeight: 1.7, color: '#333', whiteSpace: 'pre-wrap' }}>
+          <p style={{ margin: 0, fontSize: '15px', lineHeight: 1.8, color: '#333', whiteSpace: 'pre-wrap', textAlign: 'left' }}>
             {content}
           </p>
         </div>
