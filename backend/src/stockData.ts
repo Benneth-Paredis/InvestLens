@@ -7,10 +7,10 @@ import type { Holding, StockData } from './types';
 // Fetches quote summary data for a single holding and returns enriched StockData.
 export async function fetchStockData(holding: Holding): Promise<StockData> {
   const quote = await yahooFinance.quoteSummary(holding.ticker, {
-    modules: ['summaryProfile', 'summaryDetail', 'price'],
+    modules: ['assetProfile', 'summaryDetail', 'price'],
   }) as any;
 
-  const profile = quote.summaryProfile;
+  const profile = quote.assetProfile;
   const detail = quote.summaryDetail;
   const price = quote.price;
 
@@ -32,5 +32,6 @@ export async function fetchStockData(holding: Holding): Promise<StockData> {
     weekLow52: detail?.fiftyTwoWeekLow?.toFixed(2) ?? 'N/A',
     peRatio: detail?.trailingPE?.toFixed(2) ?? 'N/A',
     currentPrice: price?.regularMarketPrice != null ? `$${price.regularMarketPrice.toFixed(2)}` : 'N/A',
+    description: profile?.longBusinessSummary ?? null,
   };
 }

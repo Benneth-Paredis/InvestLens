@@ -17,6 +17,7 @@ export interface StockData {
   weekLow52: string;
   peRatio: string;
   currentPrice: string;
+  description: string | null;
 }
 
 // A single closing price on a given date.

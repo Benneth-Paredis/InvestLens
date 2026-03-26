@@ -33,10 +33,12 @@ export default function StockDetail({ ticker }: Props) {
   const [interval, setInterval] = useState<Interval>('monthly');
   const [loadingStats, setLoadingStats] = useState(false);
   const [loadingPrices, setLoadingPrices] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
 
   // Re-fetch fundamental stats whenever the selected ticker changes.
   useEffect(() => {
     if (!ticker) { setStats(null); return; }
+    setModalOpen(false);
     setLoadingStats(true);
     fetch('/api/portfolio', {
       method: 'POST',
@@ -156,25 +158,84 @@ export default function StockDetail({ ticker }: Props) {
         {loadingStats ? (
           <p style={{ color: '#999', fontSize: '14px', margin: 0 }}>Loading stats...</p>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px 24px' }}>
-            {[
-              { label: 'Sector', value: stats?.sector },
-              { label: 'Market Cap', value: stats?.marketCap },
-              { label: 'Current Price', value: stats?.currentPrice },
-              { label: 'P/E Ratio', value: stats?.peRatio },
-              { label: '52W High', value: stats?.weekHigh52 },
-              { label: '52W Low', value: stats?.weekLow52 },
-            ].map(({ label, value }) => (
-              <div key={label}>
-                <p style={{ margin: 0, fontSize: '11px', color: '#999', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  {label}
+          <>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px 24px' }}>
+              {[
+                { label: 'Sector', value: stats?.sector },
+                { label: 'Market Cap', value: stats?.marketCap },
+                { label: 'Current Price', value: stats?.currentPrice },
+                { label: 'P/E Ratio', value: stats?.peRatio },
+                { label: '52W High', value: stats?.weekHigh52 },
+                { label: '52W Low', value: stats?.weekLow52 },
+              ].map(({ label, value }) => (
+                <div key={label}>
+                  <p style={{ margin: 0, fontSize: '11px', color: '#999', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    {label}
+                  </p>
+                  <p style={{ margin: '4px 0 0', fontSize: '15px', fontWeight: 700, color: '#1a1a1a' }}>
+                    {value ?? '—'}
+                  </p>
+                </div>
+              ))}
+            </div>
+            {stats?.description && (
+              <div style={{ marginTop: '20px' }}>
+                <p style={{
+                  margin: 0,
+                  fontSize: '13px',
+                  lineHeight: 1.7,
+                  color: '#666',
+                  display: '-webkit-box',
+                  WebkitBoxOrient: 'vertical',
+                  WebkitLineClamp: 3,
+                  overflow: 'hidden',
+                }}>
+                  {stats.description}
                 </p>
-                <p style={{ margin: '4px 0 0', fontSize: '15px', fontWeight: 700, color: '#1a1a1a' }}>
-                  {value ?? '—'}
-                </p>
+                <button
+                  onClick={() => setModalOpen(true)}
+                  style={{ marginTop: '8px', background: 'none', border: 'none', padding: 0, fontSize: '13px', color: '#1a1a2e', fontWeight: 600, cursor: 'pointer' }}
+                >
+                  Read more
+                </button>
               </div>
-            ))}
-          </div>
+            )}
+
+            {/* Description modal */}
+            {modalOpen && (
+              <div
+                onClick={() => setModalOpen(false)}
+                style={{
+                  position: 'fixed', inset: 0,
+                  backgroundColor: 'rgba(0,0,0,0.5)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  zIndex: 1000,
+                }}
+              >
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                  style={{
+                    backgroundColor: '#fff', borderRadius: '12px',
+                    padding: '32px', maxWidth: '560px', width: '90%',
+                    maxHeight: '80vh', overflowY: 'auto', position: 'relative',
+                  }}
+                >
+                  <button
+                    onClick={() => setModalOpen(false)}
+                    style={{ position: 'absolute', top: '16px', right: '16px', background: 'none', border: 'none', fontSize: '22px', cursor: 'pointer', color: '#999', lineHeight: 1 }}
+                  >
+                    ×
+                  </button>
+                  <p style={{ margin: '0 0 16px', fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#1a1a1a' }}>
+                    About {ticker}
+                  </p>
+                  <p style={{ margin: 0, fontSize: '15px', lineHeight: 1.8, color: '#333' }}>
+                    {stats.description}
+                  </p>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 

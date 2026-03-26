@@ -15,6 +15,16 @@ export default function PortfolioPage() {
   const [analysisLoading, setAnalysisLoading] = useState(false);
   const navigate = useNavigate();
 
+  // Total amount the user has invested in stocks
+  const totalInvested = holdings.reduce((sum, h) => sum + h.amountInvested, 0);
+  const currentWorth = holdings.reduce((sum, h) => {
+    const data = stockDataMap[h.ticker];
+    const price = data ? parseFloat(data.currentPrice.replace('$', '')) : 0;
+    return sum + (isNaN(price) ? 0 : h.shares * price)
+  }, 0);
+  const gainLoss = currentWorth - totalInvested;
+  const gainLossPct = totalInvested > 0 ? (gainLoss / totalInvested) * 100 : 0;
+
   // Load persisted holdings from the database on first render.
   useEffect(() => {
     fetch('/api/holdings')
@@ -77,47 +87,57 @@ export default function PortfolioPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', padding: '40px 48px', boxSizing: 'border-box' }}>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', padding: '40px 48px', boxSizing: 'border-box' }}>
 
       {/* Two-column layout filling the full viewport */}
-      <div style={{ display: 'flex', gap: '48px', flex: 1, alignItems: 'stretch' }}>
+      <div style={{ display: 'flex', gap: '48px', flex: 1, minHeight: 0, alignItems: 'stretch' }}>
 
         {/* Left column — 40% */}
-        <div style={{ width: '40%', display: 'flex', flexDirection: 'column', gap: '32px' }}>
-          <div>
-            <h1 style={{ fontSize: '28px', fontWeight: 800, color: '#1a1a1a', margin: '0 0 16px' }}>InvestLens</h1>
+        <div style={{ width: '40%', display: 'flex', flexDirection: 'column', overflow: 'hidden', paddingLeft: '2px' }}>
+
+          {/* Header stats — fixed, never scrolls */}
+          <div style={{ flexShrink: 0, marginBottom: '32px' }}>
+            <h1 style={{ fontSize: '28px', fontWeight: 800, color: '#1a1a1a', margin: '0 0 16px', textAlign: 'center' }}>InvestLens</h1>
             <div style={{ display: 'flex', gap: '32px', justifyContent: 'center' }}>
               <div style={{ textAlign: 'center' }}>
                 <p style={{ margin: '0 0 4px', fontSize: '11px', color: '#999', textTransform: 'uppercase', letterSpacing: '0.6px' }}>Total Invested</p>
                 <p style={{ margin: 0, fontSize: '24px', fontWeight: holdings.length > 0 ? 700 : 400, color: holdings.length > 0 ? '#1a1a1a' : '#bbb' }}>
-                  ${holdings.reduce((sum, h) => sum + h.amountInvested, 0).toLocaleString()}
+                  ${totalInvested.toLocaleString()}
                 </p>
               </div>
               <div style={{ textAlign: 'center' }}>
                 <p style={{ margin: '0 0 4px', fontSize: '11px', color: '#999', textTransform: 'uppercase', letterSpacing: '0.6px' }}>Current Worth</p>
                 <p style={{ margin: 0, fontSize: '24px', fontWeight: holdings.length > 0 ? 700 : 400, color: holdings.length > 0 ? '#1a1a1a' : '#bbb' }}>
-                  ${holdings.reduce((sum, h) => {
-                    const data = stockDataMap[h.ticker];
-                    const price = data ? parseFloat(data.currentPrice.replace('$', '')) : 0;
-                    return sum + (isNaN(price) ? 0 : h.shares * price);
-                  }, 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                  ${currentWorth.toLocaleString(undefined, {maximumFractionDigits: 2})}
+                </p>
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <p style={{ margin: '0 0 4px', fontSize: '11px', color: '#999', textTransform: 'uppercase', letterSpacing: '0.6px' }}>Gain / Loss</p>
+                <p style={{ margin: 0, fontSize: '24px', fontWeight: holdings.length > 0 ? 700 : 400, color: holdings.length === 0 ? '#bbb' : gainLoss >= 0 ? '#16a34a' : '#dc2626'}}>
+                   {holdings.length === 0 ? '$0' : `${gainLoss >= 0 ? '+' : ''}$${gainLoss.toLocaleString(undefined, { maximumFractionDigits: 2 })} (${gainLossPct.toFixed(1)}%)`}
                 </p>
               </div>
             </div>
           </div>
 
-          <PortfolioInput holdings={holdings} onAdd={handleAdd} />
+          {/* Input */}
+          <div style={{ flexShrink: 0, marginBottom: '32px' }}>
+            <PortfolioInput holdings={holdings} onAdd={handleAdd} />
+          </div>
 
-          <PortfolioList
-            holdings={holdings}
-            stockDataMap={stockDataMap}
-            selectedTicker={selectedTicker}
-            onSelect={setSelectedTicker}
-            onRemove={handleRemove}
-          />
+          {/* Holdings list — grows to fill remaining space and scrolls */}
+          <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, marginBottom: '32px' }}>
+            <PortfolioList
+              holdings={holdings}
+              stockDataMap={stockDataMap}
+              selectedTicker={selectedTicker}
+              onSelect={setSelectedTicker}
+              onRemove={handleRemove}
+            />
+          </div>
 
-          {/* Analyse button pinned to the bottom of the left column */}
-          <div style={{ marginTop: 'auto' }}>
+          {/* Analyse button — fixed at the bottom */}
+          <div style={{ flexShrink: 0 }}>
             {holdings.length > 0 && (
               <button
                 onClick={handleAnalyse}
@@ -148,7 +168,7 @@ export default function PortfolioPage() {
           borderRadius: '16px',
           padding: '32px',
           boxSizing: 'border-box',
-          minHeight: '600px',
+          overflow: 'hidden',
         }}>
           <StockDetail ticker={selectedTicker} />
         </div>
