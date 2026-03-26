@@ -115,7 +115,13 @@ export default function StockDetail({ ticker }: Props) {
               <XAxis
                 dataKey="date"
                 tick={{ fontSize: 11 }}
-                tickFormatter={(d) => d.slice(0, 7)}
+                tickFormatter={(d) =>
+                  interval === 'daily'
+                    ? d.slice(11, 16)           // "HH:MM"
+                    : interval === 'weekly'
+                    ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+                    : d.slice(0, 7)             // "YYYY-MM"
+                }
                 interval="preserveStartEnd"
               />
               <YAxis
@@ -125,7 +131,11 @@ export default function StockDetail({ ticker }: Props) {
               />
               <Tooltip
                 formatter={(value: number) => [`$${value.toFixed(2)}`, 'Close']}
-                labelFormatter={(label) => `Date: ${label}`}
+                labelFormatter={(label) =>
+                  interval === 'daily'
+                    ? new Date(label).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+                    : label
+                }
               />
               <Line
                 type="monotone"

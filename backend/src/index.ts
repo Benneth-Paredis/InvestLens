@@ -5,6 +5,7 @@ import { fetchStockData } from "./stockData";
 import { fetchPriceHistory } from "./priceHistory";
 import { analysePortfolio } from "./openai";
 import { Holding } from "./types";
+import { pool, initDb } from "./db";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -42,6 +43,30 @@ app.get("/prices/:ticker/:interval", async (req, res) => {
   res.json(result);
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+// Returns all persisted holdings from the database.
+app.get("/holdings", async (_req, res) => {
+  const result = await pool.query(
+    'SELECT ticker, shares::float AS shares, amount_invested::float AS "amountInvested" FROM holdings ORDER BY id'
+  );
+  res.json({ holdings: result.rows as Holding[] });
 });
+
+// Persists a new holding to the database.
+app.post("/holdings", async (req, res) => {
+  const { ticker, shares, amountInvested } = req.body as Holding;
+  await pool.query(
+    'INSERT INTO holdings (ticker, shares, amount_invested) VALUES ($1, $2, $3)',
+    [ticker, shares, amountInvested]
+  );
+  res.json({ success: true });
+});
+
+// Removes a holding from the database by ticker symbol.
+app.delete("/holdings/:ticker", async (req, res) => {
+  await pool.query('DELETE FROM holdings WHERE ticker = $1', [req.params.ticker]);
+  res.json({ success: true });
+});
+
+initDb()
+  .then(() => app.listen(PORT, () => console.log(`Server running on port ${PORT}`)))
+  .catch((err) => { console.error('Failed to initialise database:', err); process.exit(1); });

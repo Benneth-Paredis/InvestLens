@@ -15,6 +15,13 @@ export default function PortfolioPage() {
   const [analysisLoading, setAnalysisLoading] = useState(false);
   const navigate = useNavigate();
 
+  // Load persisted holdings from the database on first render.
+  useEffect(() => {
+    fetch('/api/holdings')
+      .then((r) => r.json())
+      .then((data) => setHoldings(data.holdings));
+  }, []);
+
   // Re-fetch stock data for all holdings whenever the list changes.
   useEffect(() => {
     if (holdings.length === 0) return;
@@ -31,19 +38,22 @@ export default function PortfolioPage() {
       });
   }, [holdings]);
 
-  // Removes a holding and clears the selection if that holding was selected.
-  function handleRemove(ticker: string) {
+  // Removes a holding from the database and updates local state.
+  async function handleRemove(ticker: string) {
+    await fetch(`/api/holdings/${ticker}`, { method: 'DELETE' });
     setHoldings((prev) => prev.filter((h) => h.ticker !== ticker));
     if (selectedTicker === ticker) setSelectedTicker(null);
   }
 
-  // Adds a holding only if the ticker is not already in the list.
-  function handleAdd(holding: Holding) {
-    setHoldings((prev) => {
-      const exists = prev.find((h) => h.ticker === holding.ticker);
-      if (exists) return prev;
-      return [...prev, holding];
+  // Persists a new holding to the database and updates local state.
+  async function handleAdd(holding: Holding) {
+    if (holdings.some((h) => h.ticker === holding.ticker)) return;
+    await fetch('/api/holdings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(holding),
     });
+    setHoldings((prev) => [...prev, holding]);
   }
 
   // Calls the /analyse endpoint, persists results to localStorage, then navigates to the analysis page.
