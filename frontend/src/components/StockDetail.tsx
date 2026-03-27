@@ -142,7 +142,10 @@ export default function StockDetail({ ticker }: Props) {
               <Line
                 type="monotone"
                 dataKey="close"
-                stroke="#1a1a2e"
+                stroke={priceHistory.prices.length >= 2 ?
+                  priceHistory.prices[priceHistory.prices.length - 1].close >= priceHistory.prices[0].close ?
+                  '#16a34a' : '#dc2626' : '#1a1a2e'
+                }
                 dot={false}
                 strokeWidth={2}
               />
