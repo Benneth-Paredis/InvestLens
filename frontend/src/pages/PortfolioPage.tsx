@@ -6,6 +6,7 @@ import type { Holding, StockData } from '../types';
 import PortfolioInput from '../components/PortfolioInput';
 import PortfolioList from '../components/PortfolioList';
 import StockDetail from '../components/StockDetail';
+import PortfolioChart from '../components/PortfolioChart';
 
 // Manages the holdings list, selected ticker, and the analyse action that navigates to AnalysisPage.
 export default function PortfolioPage() {
@@ -168,9 +169,35 @@ export default function PortfolioPage() {
           borderRadius: '16px',
           padding: '32px',
           boxSizing: 'border-box',
-          overflow: 'hidden',
+          overflowY: 'auto',
         }}>
-          <StockDetail ticker={selectedTicker} />
+          {selectedTicker && holdings.length > 0 && (
+            <button
+              onClick={() => setSelectedTicker(null)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                marginBottom: '16px',
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                fontSize: '13px',
+                fontWeight: 600,
+                color: '#1a1a2e',
+                cursor: 'pointer',
+              }}
+            >
+              ← Portfolio
+            </button>
+          )}
+          {selectedTicker ? (
+            <StockDetail ticker={selectedTicker} />
+          ) : holdings.length > 0 ? (
+            <PortfolioChart holdings={holdings} />
+          ) : (
+            <StockDetail ticker={null} />
+          )}
         </div>
 
       </div>

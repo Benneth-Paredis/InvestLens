@@ -2,34 +2,58 @@
 
 import { StockData } from './types';
 
-// Builds a structured prompt instructing the model to return JSON with summary, risks, and recommendations.
+// Builds a structured prompt instructing the model to return JSON with enriched analysis sections.
 export function buildPrompt(portfolio: StockData[]): string {
-  // Format each holding as a labelled block of key metrics.
+  const totalInvested = portfolio.reduce((sum, s) => sum + s.amountInvested, 0);
+
+  // Format each holding with derived metrics the AI can reason about directly.
   const holdingsText = portfolio
-    .map(
-      (stock) => `
+    .map((stock) => {
+      const currentPrice = parseFloat(stock.currentPrice.replace('$', ''));
+      const high = parseFloat(stock.weekHigh52);
+      const low = parseFloat(stock.weekLow52);
+      const portfolioWeight = totalInvested > 0
+        ? ((stock.amountInvested / totalInvested) * 100).toFixed(1)
+        : 'N/A';
+      const pctFromHigh = (!isNaN(currentPrice) && !isNaN(high) && high > 0)
+        ? (((currentPrice - high) / high) * 100).toFixed(1)
+        : 'N/A';
+      const pctFromLow = (!isNaN(currentPrice) && !isNaN(low) && low > 0)
+        ? (((currentPrice - low) / low) * 100).toFixed(1)
+        : 'N/A';
+
+      return `
   Ticker: ${stock.ticker}
-  Amount Invested: $${stock.amountInvested.toLocaleString()}
   Sector: ${stock.sector}
-  Market Cap: ${stock.marketCap}
-  52-Week High: ${stock.weekHigh52}
-  52-Week Low: ${stock.weekLow52}
-  P/E Ratio: ${stock.peRatio}`
-    )
+  Amount Invested: $${stock.amountInvested.toLocaleString()}
+  Portfolio Weight: ${portfolioWeight}%
+  Current Price: ${stock.currentPrice}
+  52-Week High: $${stock.weekHigh52} (${pctFromHigh}% from high)
+  52-Week Low: $${stock.weekLow52} (+${pctFromLow}% from low)
+  P/E Ratio: ${stock.peRatio}
+  Market Cap: ${stock.marketCap}`;
+    })
     .join('\n');
 
-  return `You are a professional portfolio analyst. Analyze the following investment portfolio.
+  return `You are a professional portfolio analyst. Analyse the following investment portfolio and provide a detailed, data-driven assessment.
 
-Portfolio Holdings:
+Total Portfolio Value: $${totalInvested.toLocaleString()}
+Number of Holdings: ${portfolio.length}
+
+Holdings:
 ${holdingsText}
 
-Instructions:
-- Summary: provide an overview of the portfolio including total amount invested, sector breakdown, and market cap breakdown (large-cap, mid-cap, small-cap). Include a diversification score out of 10 with justification.
-- Risks: comment on sector concentration risk, valuation concerns based on P/E ratios, and where each holding is positioned relative to its 52-week high and low.
-- Recommendations: suggest specific actions to improve diversification, rebalance overweight sectors, or address valuation concerns. Be concrete and actionable.
+Instructions for each section — always reference specific tickers by name, use the numbers provided, and format each point as a bullet starting with "- ":
+
+- summary: 4–6 bullets covering total invested, sector/geographic breakdown, market-cap mix (large/mid/small), and concentration highlights. End with one sentence on overall portfolio character.
+- risks: 4–6 bullets. For each major risk, name the specific ticker(s) involved. Cover: sector concentration, P/E valuation concerns (flag any P/E above 40), holdings near 52-week highs (within 5%), holdings far below 52-week highs (more than 30% off), and any single position over 30% of the portfolio.
+- opportunities: 3–5 bullets of specific, actionable opportunities — e.g. sectors/geographies missing, undervalued tickers (low P/E, near 52W low), or positions worth adding to. Name tickers or suggest specific sectors/ETFs.
+- recommendations: 4–6 concrete, prioritised action steps. Each bullet should be a specific action (trim X, add Y, consider hedging with Z). Reference portfolio weights and specific tickers.
+- score: an integer from 1–10 rating overall portfolio health (diversification, valuation, risk balance).
+- scoreJustification: one sentence explaining the score.
 
 You MUST respond with a valid JSON object and nothing else — no markdown, no extra text outside the JSON.
-The values for all three keys MUST be plain strings (not nested objects or arrays).
+All string values must use "\\n- " to separate bullet points (not actual newlines).
 Use this exact structure:
-{"summary": "plain text here", "risks": "plain text here", "recommendations": "plain text here"}`;
+{"summary": "- bullet\\n- bullet", "risks": "- bullet\\n- bullet", "opportunities": "- bullet\\n- bullet", "recommendations": "- bullet\\n- bullet", "score": 7, "scoreJustification": "one sentence here"}`;
 }

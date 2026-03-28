@@ -3,6 +3,7 @@
 import express from "express";
 import { fetchStockData } from "./stockData";
 import { fetchPriceHistory } from "./priceHistory";
+import { fetchPortfolioHistory } from "./portfolioHistory";
 import { analysePortfolio } from "./openai";
 import { Holding } from "./types";
 import { pool, initDb } from "./db";
@@ -34,6 +35,13 @@ app.post("/analyse", async (req, res) => {
   const stockData = await Promise.all(holdings.map(fetchStockData));
   const result = await analysePortfolio(stockData);
   res.json({ analysis: result });
+});
+
+// Returns combined portfolio value over time for all holdings at the requested interval.
+app.post("/portfolio-history", async (req, res) => {
+  const { holdings, interval } = req.body as { holdings: Holding[]; interval: string };
+  const history = await fetchPortfolioHistory(holdings, interval ?? 'monthly');
+  res.json({ history, interval });
 });
 
 // Returns closing price history for a single ticker at the requested interval.

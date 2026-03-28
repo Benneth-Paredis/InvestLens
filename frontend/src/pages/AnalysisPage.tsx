@@ -32,11 +32,11 @@ export default function AnalysisPage() {
   }
 
   return (
-    <div style={{ padding: '40px 48px', boxSizing: 'border-box' }}>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', padding: '40px 48px', boxSizing: 'border-box' }}>
 
       {/* Header row: title left, back button right */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '40px' }}>
-        <h1 style={{ fontSize: '32px', fontWeight: 800, color: '#1a1a1a', margin: 0 }}>Portfolio Analysis</h1>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '32px', flexShrink: 0 }}>
+        <h1 style={{ fontSize: '28px', fontWeight: 800, color: '#1a1a1a', margin: 0 }}>Portfolio Analysis</h1>
         <button
           onClick={() => navigate('/')}
           style={{ padding: '8px 16px', cursor: 'pointer', fontSize: '14px', borderRadius: '6px', border: '1px solid #ccc', background: '#fff', fontWeight: 500 }}
@@ -45,25 +45,33 @@ export default function AnalysisPage() {
         </button>
       </div>
 
-      {/* Two-column layout: pie chart left, analysis sections right */}
-      <div style={{ display: 'flex', gap: '32px', alignItems: 'flex-start' }}>
+      {/* Two-column layout filling remaining height */}
+      <div style={{ display: 'flex', gap: '48px', flex: 1, minHeight: 0, alignItems: 'stretch' }}>
 
-        {/* Left — pie chart card (35%) */}
-        <div style={{
-          width: '35%',
-          border: '1px solid #e5e5e5',
-          borderRadius: '12px',
-          padding: '24px',
-          boxSizing: 'border-box',
-        }}>
-          <p style={{ margin: '0 0 16px', fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#1a1a1a' }}>
-            Sector Breakdown
-          </p>
-          <SectorPieChart holdings={holdings} />
+        {/* Left column — 40% */}
+        <div style={{ width: '40%', display: 'flex', flexDirection: 'column', overflow: 'hidden', paddingLeft: '2px' }}>
+          <div style={{
+            border: '1px solid #e5e5e5',
+            borderRadius: '12px',
+            padding: '24px',
+            boxSizing: 'border-box',
+          }}>
+            <p style={{ margin: '0 0 16px', fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#1a1a1a' }}>
+              Sector Breakdown
+            </p>
+            <SectorPieChart holdings={holdings} />
+          </div>
         </div>
 
-        {/* Right — analysis sections (65%) */}
-        <div style={{ width: '65%' }}>
+        {/* Right column — 60% */}
+        <div style={{
+          width: '60%',
+          backgroundColor: '#f5f5f5',
+          borderRadius: '16px',
+          padding: '32px',
+          boxSizing: 'border-box',
+          overflowY: 'auto',
+        }}>
           <AnalysisSections analysis={analysis} />
         </div>
 

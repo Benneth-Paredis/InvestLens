@@ -16,6 +16,12 @@ interface Props {
   ticker: string | null;
 }
 
+interface NormalizedPoint {
+  date: string;
+  stock: number | null;
+  spy: number | null;
+}
+
 const INTERVALS = ['daily', 'weekly', 'monthly', 'yearly'] as const;
 type Interval = (typeof INTERVALS)[number];
 
@@ -30,6 +36,7 @@ const card: React.CSSProperties = {
 export default function StockDetail({ ticker }: Props) {
   const [stats, setStats] = useState<StockData | null>(null);
   const [priceHistory, setPriceHistory] = useState<PriceHistory | null>(null);
+  const [spyHistory, setSpyHistory] = useState<PriceHistory | null>(null);
   const [interval, setInterval] = useState<Interval>('monthly');
   const [loadingStats, setLoadingStats] = useState(false);
   const [loadingPrices, setLoadingPrices] = useState(false);
@@ -51,15 +58,56 @@ export default function StockDetail({ ticker }: Props) {
       .finally(() => setLoadingStats(false));
   }, [ticker]);
 
-  // Re-fetch price history whenever the ticker or selected interval changes.
+  // Re-fetch price history for the stock and SPY benchmark whenever ticker or interval changes.
   useEffect(() => {
-    if (!ticker) { setPriceHistory(null); return; }
+    if (!ticker) { setPriceHistory(null); setSpyHistory(null); return; }
     setLoadingPrices(true);
-    fetch(`/api/prices/${ticker}/${interval}`)
-      .then((r) => r.json())
-      .then((data) => setPriceHistory(data))
+    Promise.all([
+      fetch(`/api/prices/${ticker}/${interval}`).then((r) => r.json()),
+      fetch(`/api/prices/SPY/${interval}`).then((r) => r.json()),
+    ])
+      .then(([stockData, spyData]) => {
+        setPriceHistory(stockData);
+        setSpyHistory(spyData);
+      })
       .finally(() => setLoadingPrices(false));
   }, [ticker, interval]);
+
+  // Normalize both series to % change from their first data point so they're comparable on one axis.
+  // SPY uses forward-fill so cross-exchange stocks (e.g. ASX) still get a benchmark line even when
+  // their trading dates don't exactly match NYSE dates.
+  const chartData: NormalizedPoint[] = (() => {
+    if (!priceHistory || priceHistory.prices.length === 0) return [];
+    const stockFirst = priceHistory.prices[0].close;
+
+    // Sort SPY prices ascending so we can walk them with a pointer.
+    const spySorted = [...(spyHistory?.prices ?? [])].sort((a, b) => a.date.localeCompare(b.date));
+    const spyFirst = spySorted[0]?.close ?? null;
+    let si = 0;
+    let lastSpyClose: number | null = null;
+
+    return priceHistory.prices.map((p) => {
+      // Advance SPY pointer to find the most recent SPY close on or before this date.
+      while (si < spySorted.length && spySorted[si].date <= p.date) {
+        lastSpyClose = spySorted[si].close;
+        si++;
+      }
+      return {
+        date: p.date,
+        stock: parseFloat((((p.close / stockFirst) - 1) * 100).toFixed(2)),
+        spy: spyFirst != null && lastSpyClose != null
+          ? parseFloat((((lastSpyClose / spyFirst) - 1) * 100).toFixed(2))
+          : null,
+      };
+    });
+  })();
+
+  const lineColor =
+    priceHistory && priceHistory.prices.length >= 2
+      ? priceHistory.prices[priceHistory.prices.length - 1].close >= priceHistory.prices[0].close
+        ? '#16a34a'
+        : '#dc2626'
+      : '#1a1a2e';
 
   // Empty state shown when no ticker is selected.
   if (!ticker) {
@@ -106,51 +154,74 @@ export default function StockDetail({ ticker }: Props) {
         </div>
       </div>
 
-      {/* Card 2: line chart */}
-      <div style={{ ...card, height: '260px' }}>
+      {/* Card 2: line chart with SPY benchmark */}
+      <div style={{ ...card, height: '280px' }}>
         {loadingPrices ? (
           <p style={{ color: '#999', fontSize: '14px', margin: 0 }}>Loading prices...</p>
-        ) : priceHistory && priceHistory.prices.length > 0 ? (
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={priceHistory.prices}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-              <XAxis
-                dataKey="date"
-                tick={{ fontSize: 11 }}
-                tickFormatter={(d) =>
-                  interval === 'daily'
-                    ? d.slice(11, 16)           // "HH:MM"
-                    : interval === 'weekly'
-                    ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
-                    : d.slice(0, 7)             // "YYYY-MM"
-                }
-                interval="preserveStartEnd"
-              />
-              <YAxis
-                tick={{ fontSize: 11 }}
-                domain={['auto', 'auto']}
-                tickFormatter={(v) => `$${v}`}
-              />
-              <Tooltip
-                formatter={(value: number) => [`$${value.toFixed(2)}`, 'Close']}
-                labelFormatter={(label) =>
-                  interval === 'daily'
-                    ? new Date(label).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
-                    : label
-                }
-              />
-              <Line
-                type="monotone"
-                dataKey="close"
-                stroke={priceHistory.prices.length >= 2 ?
-                  priceHistory.prices[priceHistory.prices.length - 1].close >= priceHistory.prices[0].close ?
-                  '#16a34a' : '#dc2626' : '#1a1a2e'
-                }
-                dot={false}
-                strokeWidth={2}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+        ) : chartData.length > 0 ? (
+          <>
+            {/* Legend */}
+            <div style={{ display: 'flex', gap: '16px', marginBottom: '8px' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#444' }}>
+                <span style={{ width: '20px', height: '2px', backgroundColor: lineColor, display: 'inline-block' }} />
+                {ticker}
+              </span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#444' }}>
+                <span style={{ width: '20px', height: '0', borderTop: '2px dashed #9ca3af', display: 'inline-block' }} />
+                SPY
+              </span>
+            </div>
+            <ResponsiveContainer width="100%" height="88%">
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+                <XAxis
+                  dataKey="date"
+                  tick={{ fontSize: 11 }}
+                  tickFormatter={(d) =>
+                    interval === 'daily'
+                      ? d.slice(11, 16)
+                      : interval === 'weekly'
+                      ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+                      : d.slice(0, 7)
+                  }
+                  interval="preserveStartEnd"
+                />
+                <YAxis
+                  tick={{ fontSize: 11 }}
+                  domain={['auto', 'auto']}
+                  tickFormatter={(v) => `${v >= 0 ? '+' : ''}${v.toFixed(1)}%`}
+                />
+                <Tooltip
+                  formatter={(value: number, name: string) => [
+                    `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`,
+                    name === 'stock' ? ticker : 'SPY',
+                  ]}
+                  labelFormatter={(label) =>
+                    interval === 'daily'
+                      ? new Date(label).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+                      : label
+                  }
+                />
+                <Line
+                  type="monotone"
+                  dataKey="stock"
+                  stroke={lineColor}
+                  dot={false}
+                  strokeWidth={2}
+                  connectNulls={false}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="spy"
+                  stroke="#9ca3af"
+                  strokeDasharray="4 2"
+                  dot={false}
+                  strokeWidth={2}
+                  connectNulls={false}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </>
         ) : (
           <p style={{ color: '#999', fontSize: '14px', margin: 0 }}>No price data available.</p>
         )}

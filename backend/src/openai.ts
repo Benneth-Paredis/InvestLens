@@ -13,7 +13,10 @@ const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 export interface AnalysisResult {
   summary: string;
   risks: string;
+  opportunities: string;
   recommendations: string;
+  score: number;
+  scoreJustification: string;
 }
 
 // Sends the portfolio to GPT-4o-mini and parses the JSON analysis response.
