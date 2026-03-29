@@ -2,6 +2,7 @@
 
 import { useNavigate } from 'react-router-dom';
 import AnalysisSections from '../components/AnalysisSections';
+import MarketTimer from '../components/MarketTimer';
 import SectorPieChart from '../components/SectorPieChart';
 import type { Holding } from '../types';
 
@@ -49,7 +50,8 @@ export default function AnalysisPage() {
       <div style={{ display: 'flex', gap: '48px', flex: 1, minHeight: 0, alignItems: 'stretch' }}>
 
         {/* Left column — 40% */}
-        <div style={{ width: '40%', display: 'flex', flexDirection: 'column', overflow: 'hidden', paddingLeft: '2px' }}>
+        <div style={{ width: '40%', display: 'flex', flexDirection: 'column', gap: '16px', overflow: 'hidden', paddingLeft: '2px' }}>
+          <MarketTimer />
           <div style={{
             border: '1px solid #e5e5e5',
             borderRadius: '12px',
