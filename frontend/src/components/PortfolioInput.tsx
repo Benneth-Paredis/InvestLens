@@ -25,6 +25,7 @@ export default function PortfolioInput({ holdings, onAdd }: Props) {
   const [amountInvested, setAmountInvested] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [validating, setValidating] = useState(false);
+  const [hoveredAddButton, setHoveredAddButton] = useState(false)
 
   async function handleAdd() {
     if (!ticker || !shares || !amountInvested) return;
@@ -86,6 +87,8 @@ export default function PortfolioInput({ holdings, onAdd }: Props) {
           style={{ ...inputStyle, flex: 1 }}
         />
         <button
+          onMouseEnter={() => {setHoveredAddButton(true)}}
+          onMouseLeave={() => {setHoveredAddButton(false)}}
           onClick={handleAdd}
           disabled={validating}
           style={{
@@ -96,11 +99,12 @@ export default function PortfolioInput({ holdings, onAdd }: Props) {
             cursor: validating ? 'not-allowed' : 'pointer',
             lineHeight: 1,
             opacity: validating ? 0.6 : 1,
-            backgroundColor: '#1a1a2e',
+            backgroundColor: hoveredAddButton ? '#20b452' : '#1a1a2e',
             color: '#fff',
             border: 'none',
             borderRadius: '6px',
             flexShrink: 0,
+            
           }}
         >
           {validating ? '…' : '+'}

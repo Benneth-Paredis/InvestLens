@@ -2,8 +2,8 @@
 
 import { useNavigate } from 'react-router-dom';
 import AnalysisSections from '../components/AnalysisSections';
-import MarketTimer from '../components/MarketTimer';
 import SectorPieChart from '../components/SectorPieChart';
+import TopHoldings from '../components/TopHoldings';
 import type { Holding } from '../types';
 
 // Reads analysis and holdings from localStorage (written by PortfolioPage) and renders results.
@@ -51,7 +51,7 @@ export default function AnalysisPage() {
 
         {/* Left column — 40% */}
         <div style={{ width: '40%', display: 'flex', flexDirection: 'column', gap: '16px', overflow: 'hidden', paddingLeft: '2px' }}>
-          <MarketTimer />
+          <TopHoldings holdings={holdings} />
           <div style={{
             border: '1px solid #e5e5e5',
             borderRadius: '12px',

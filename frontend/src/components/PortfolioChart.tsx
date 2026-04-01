@@ -35,6 +35,7 @@ export default function PortfolioChart({ holdings }: Props) {
   const [history, setHistory] = useState<PortfolioValuePoint[]>([]);
   const [interval, setInterval] = useState<Interval>('monthly');
   const [loading, setLoading] = useState(false);
+  const [hoveredInterval, setHoveredInterval] = useState<string | null>(null);
 
   useEffect(() => {
     if (holdings.length === 0) { setHistory([]); return; }
@@ -69,13 +70,15 @@ export default function PortfolioChart({ holdings }: Props) {
             <button
               key={i}
               onClick={() => setInterval(i)}
+              onMouseEnter={() => setHoveredInterval(i)}
+              onMouseLeave={() => setHoveredInterval(null)}
               style={{
                 padding: '6px 14px',
                 fontSize: '13px',
                 cursor: 'pointer',
                 borderRadius: '4px',
                 border: '1px solid #e5e5e5',
-                backgroundColor: interval === i ? '#1a1a2e' : '#fff',
+                backgroundColor: interval === i ? '#1a1a2e' : hoveredInterval === i ? '#bdb9b9' : '#fff',
                 color: interval === i ? '#fff' : '#111',
                 fontWeight: interval === i ? 600 : 400,
               }}

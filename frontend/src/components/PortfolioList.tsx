@@ -1,5 +1,6 @@
 // Displays all current holdings as a selectable, removable list with gain/loss indicators.
 
+import { useState } from 'react';
 import type { Holding, StockData } from '../types';
 
 interface Props {
@@ -21,6 +22,8 @@ function calcMetrics(holding: Holding, data: StockData): { worth: number | null;
 
 // Renders each holding as a row with stacked data points, gain/loss badge, and a remove button.
 export default function PortfolioList({ holdings, stockDataMap, selectedTicker, onSelect, onRemove }: Props) {
+  const [hoveredTicker, setHoveredTicker] = useState<string | null>(null);
+
   if (holdings.length === 0) {
     return <p style={{ color: '#999', fontSize: '14px' }}>No holdings added yet.</p>;
   }
@@ -36,6 +39,8 @@ export default function PortfolioList({ holdings, stockDataMap, selectedTicker, 
           <div
             key={holding.ticker}
             onClick={() => onSelect(holding.ticker)}
+            onMouseEnter={() => setHoveredTicker(holding.ticker)}
+            onMouseLeave={() => setHoveredTicker(null)}
             style={{
               display: 'flex',
               justifyContent: 'space-between',
@@ -43,7 +48,7 @@ export default function PortfolioList({ holdings, stockDataMap, selectedTicker, 
               padding: '12px 16px',
               borderRadius: '6px',
               cursor: 'pointer',
-              backgroundColor: isSelected ? '#1a1a2e' : '#f5f5f5',
+              backgroundColor: isSelected ? '#1a1a2e' : hoveredTicker === holding.ticker ? '#e8e8e8' : '#f5f5f5',
               color: isSelected ? '#fff' : '#111',
               transition: 'background-color 0.15s',
             }}
